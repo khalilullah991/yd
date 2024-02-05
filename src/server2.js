@@ -1,28 +1,42 @@
 const express = require('express');
 const ytdl = require('ytdl-core');
 const app = express();
-const fs = require('fs');
+const cors = require('cors');
 const port = 5000;
+app.use(cors());
 
-app.get('/download', (req, res) => {
+// New endpoint to get available video formats
+app.get('/videoInfo', async (req, res) => {
   const { videoUrl } = req.query;
 
   if (!videoUrl || !ytdl.validateURL(videoUrl)) {
     return res.status(400).send('Invalid or missing video URL');
   }
 
-  ytdl.getInfo(videoUrl).then(info => {
-    const title = info.videoDetails.title.replace(/[^\w\s]/gi, '').replace(/ /g, '_'); // sanitize title for filename
-    res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
+  try {
+    const info = await ytdl.getInfo(videoUrl);
+    const formats = ytdl.filterFormats(info.formats, 'videoandaudio');
+    const videoFormats = formats.map(format => ({
+      itag: format.itag,
+      quality: format.qualityLabel,
+      container: format.container,
+      url: format.url
+    }));
 
-    ytdl(videoUrl, {
-        
-      format: 'mp4'
-    }).pipe(res);
-  }).catch(error => {
-    console.error('Error downloading the video:', error);
-    res.status(500).send('Failed to download video');
-  });
+    res.json(videoFormats);
+  } catch (error) {
+    console.error('Error getting video information:', error);
+    res.status(500).send('Failed to get video information');
+  }
+});
+
+// Download endpoint
+app.get('/download', (req, res) => {
+  const { videoUrl, itag } = req.query;
+  
+  // Re-validate here if desired
+  res.header('Content-Disposition', 'attachment; filename="video.mp4"');
+  ytdl(videoUrl, { itag }).pipe(res);
 });
 
 app.listen(port, () => {
