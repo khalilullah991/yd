@@ -10,7 +10,7 @@ const VideoDownloader = () => {
   const fetchVideoInfo = async () => {
     try {
       setLoading(true); // Start the loading animation
-      const response = await axios.get(`http://localhost:5000/videoInfo?videoUrl=${encodeURIComponent(url)}`);
+      const response = await axios.get(`http://132.145.168.56:5000/videoInfo?videoUrl=${encodeURIComponent(url)}`);
       setFormats(response.data);
     } catch (error) {
       console.error('Error fetching video information:', error);
@@ -21,7 +21,7 @@ const VideoDownloader = () => {
   };
 
   const handleDownload = (itag) => {
-    window.location.href = `http://localhost:5000/download?videoUrl=${encodeURIComponent(url)}&itag=${itag}`;
+    window.location.href = `http://132.145.168.56:5000/download?videoUrl=${encodeURIComponent(url)}&itag=${itag}`;
   };
 
   return (
